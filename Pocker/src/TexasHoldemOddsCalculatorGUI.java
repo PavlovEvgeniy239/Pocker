@@ -2,8 +2,6 @@ import models.PlayerStatistics;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +34,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
 
     public TexasHoldemOddsCalculatorGUI() {
         setTitle("Texas Holdem Odds Calculator");
-        setSize(600, 800);  // Increased the size to accommodate wider fields
+        setSize(600, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -59,7 +57,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
 
         // Add player count field
-        yourPlayersCount = new JTextField(30);  // Increased width
+        yourPlayersCount = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 0;
         yourHandPanel.add(new JLabel("Player count"), gbc);
@@ -67,7 +65,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         yourHandPanel.add(yourPlayersCount, gbc);
 
         // Add your hand input field
-        yourHandField = new JTextField(30);  // Increased width
+        yourHandField = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 2;
         yourHandPanel.add(new JLabel("Your Hand (comma-separated):"), gbc);
@@ -75,7 +73,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         yourHandPanel.add(yourHandField, gbc);
 
         // Add board input field
-        yourBoardField = new JTextField(30);  // Increased width
+        yourBoardField = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 4;
         yourHandPanel.add(new JLabel("Board (comma-separated):"), gbc);
@@ -83,7 +81,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         yourHandPanel.add(yourBoardField, gbc);
 
         // Add bank input field
-        yourBankField = new JTextField(30);  // Increased width
+        yourBankField = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 6;
         yourHandPanel.add(new JLabel("Bank (excluding bids):"), gbc);
@@ -91,7 +89,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         yourHandPanel.add(yourBankField, gbc);
 
         // Add bank input field
-        yourBetField = new JTextField(30);  // Increased width
+        yourBetField = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 8;
         yourHandPanel.add(new JLabel("Bet:"), gbc);
@@ -137,7 +135,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
 
         // Add player count input field
-        playerCountField = new JTextField(10);  // Increased width
+        playerCountField = new JTextField(10);
         gbc.gridx = 0;
         gbc.gridy = 0;
         allPlayersPanel.add(new JLabel("Number of Players:"), gbc);
@@ -155,7 +153,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         allPlayersPanel.add(playerFieldsPanel, gbc);
 
         // Add board input field
-        allPlayersBoardField = new JTextField(30);  // Increased width
+        allPlayersBoardField = new JTextField(30);
         gbc.gridy = 4;
         allPlayersPanel.add(new JLabel("Board (comma-separated):"), gbc);
         gbc.gridy = 5;
@@ -174,25 +172,22 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
             allPlayersPanel.add(playerWinLabels[i], gbc);
         }
 
-        setPlayerCountButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int playerCount = Integer.parseInt(playerCountField.getText());
-                playerHandFields = new JTextField[playerCount];
-                playerFieldsPanel.removeAll();
-                GridBagConstraints gbcInner = new GridBagConstraints();
-                gbcInner.insets = new Insets(5, 5, 5, 5);
-                for (int i = 0; i < playerCount; i++) {
-                    playerHandFields[i] = new JTextField(30);  // Increased width
-                    gbcInner.gridx = 0;
-                    gbcInner.gridy = i * 2;
-                    playerFieldsPanel.add(new JLabel("Player " + (i + 1) + " Hand (comma-separated):"), gbcInner);
-                    gbcInner.gridy = i * 2 + 1;
-                    playerFieldsPanel.add(playerHandFields[i], gbcInner);
-                }
-                allPlayersPanel.revalidate();
-                allPlayersPanel.repaint();
+        setPlayerCountButton.addActionListener(e -> {
+            int playerCount = Integer.parseInt(playerCountField.getText());
+            playerHandFields = new JTextField[playerCount];
+            playerFieldsPanel.removeAll();
+            GridBagConstraints gbcInner = new GridBagConstraints();
+            gbcInner.insets = new Insets(5, 5, 5, 5);
+            for (int i = 0; i < playerCount; i++) {
+                playerHandFields[i] = new JTextField(30);
+                gbcInner.gridx = 0;
+                gbcInner.gridy = i * 2;
+                playerFieldsPanel.add(new JLabel("Player " + (i + 1) + " Hand (comma-separated):"), gbcInner);
+                gbcInner.gridy = i * 2 + 1;
+                playerFieldsPanel.add(playerHandFields[i], gbcInner);
             }
+            allPlayersPanel.revalidate();
+            allPlayersPanel.repaint();
         });
 
         calculateAllWinProbabilitiesButton.addActionListener(e -> {
@@ -218,7 +213,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
 
         // Add improvement hand input field
-        improvementHandField = new JTextField(30);  // Increased width
+        improvementHandField = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 0;
         improvementPanel.add(new JLabel("Your Hand (comma-separated):"), gbc);
@@ -226,7 +221,7 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         improvementPanel.add(improvementHandField, gbc);
 
         // Add improvement board input field
-        improvementBoardField = new JTextField(30);  // Increased width
+        improvementBoardField = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 2;
         improvementPanel.add(new JLabel("Board (comma-separated):"), gbc);
@@ -234,14 +229,14 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         improvementPanel.add(improvementBoardField, gbc);
 
         // Add bank input field
-        improvementBankField = new JTextField(30);  // Increased width
+        improvementBankField = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 4;
         improvementPanel.add(new JLabel("Bank:"), gbc);
         gbc.gridy = 5;
         improvementPanel.add(improvementBankField, gbc);
 
-        improvementPlayerCountField = new JTextField(30);  // Increased width
+        improvementPlayerCountField = new JTextField(30);
         gbc.gridx = 0;
         gbc.gridy = 6;
         improvementPanel.add(new JLabel("Player Count:"), gbc);
@@ -275,8 +270,8 @@ public class TexasHoldemOddsCalculatorGUI extends JFrame {
         calculateImprovementProbabilityButton.addActionListener(e -> {
             String[] hand = improvementHandField.getText().replace(" ", "").split(",");
             String[] board = new String[0];
-            if (!yourBoardField.getText().isEmpty()) {
-                board = yourBoardField.getText().replace(" ", "").split(",");
+            if (!improvementBoardField.getText().isEmpty()) {
+                board = improvementBoardField.getText().replace(" ", "").split(",");
             }
             List<String> selectedCombinations = new ArrayList<>();
             for (JCheckBox checkBox : comboCheckBoxes) {

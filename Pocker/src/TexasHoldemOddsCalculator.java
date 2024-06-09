@@ -80,8 +80,6 @@ public class TexasHoldemOddsCalculator {
             for (Map.Entry<Integer, Long> entry : playerHandWeights.entrySet()) {
                 if (entry.getValue() == max) {
                     if (isTie) {
-                        String[] fullHand = {playerHands[entry.getKey()][0], playerHands[entry.getKey()][1], simulatedBoard[0], simulatedBoard[1], simulatedBoard[2], simulatedBoard[3], simulatedBoard[4]};
-                        long handValue = evaluateHand(fullHand);
                         ties[entry.getKey()]++;
                     } else {
                         wins[entry.getKey()]++;
@@ -98,9 +96,6 @@ public class TexasHoldemOddsCalculator {
     }
 
     public static PlayerStatistics calculateWinProbability(String[] yourHand, String[] board, int playerCount) {
-        int simulationCountSqrt = SIMULATION_COUNT;
-        int simulationCount = simulationCountSqrt;
-
         int wins = 0;
         int ties = 0;
 
@@ -117,7 +112,7 @@ public class TexasHoldemOddsCalculator {
             }
         }
 
-        for (int i = 0; i < simulationCountSqrt; i++) {
+        for (int i = 0; i < SIMULATION_COUNT; i++) {
             List<String> shuffledDeck = new ArrayList<>(deck);
             Collections.shuffle(shuffledDeck);
 
@@ -131,7 +126,7 @@ public class TexasHoldemOddsCalculator {
             ties += playerStatistics.get(0).getTies();
         }
 
-        return new PlayerStatistics(wins / (double) simulationCount, ties / (double) simulationCount, wins, ties);
+        return new PlayerStatistics(wins / (double) SIMULATION_COUNT, ties / (double) SIMULATION_COUNT, wins, ties);
     }
 
     public static long evaluateHand(String[] hand) {
@@ -174,23 +169,42 @@ public class TexasHoldemOddsCalculator {
 
     private static int getOldestCombination(List<Card> cards) {
         int result = 0;
-        for (int i = 0 ; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
             result += (int) Math.pow(10, cards.get(i).getRank());
         }
         return result;
     }
 
     private static List<Card> getStraight(List<Card> cards) {
-        int start = 0;
-        for (int i = 1; i < cards.size(); i++) {
-            if (cards.get(i - 1).getRank() != cards.get(i).getRank() - 1) {
-                start = i;
+        Collections.sort(cards);
+        int sLen = 0;
+        int pointer = 1;
+        int finish = -1;
+        for (int i = 0; i < cards.size() * 2; i++) {
+            int prev = pointer - 1 >= 0 ? pointer - 1 : cards.size() - 1;
+
+            if (cards.get(prev).getRank() == cards.get(pointer).getRank() - 1 || cards.get(prev).getRank() == 12 && cards.get(pointer).getRank() == 0) {
+                sLen++;
+            } else if (cards.get(prev).getRank() != cards.get(pointer).getRank()) {
+                sLen = 0;
             }
-            if (i - start == 5) {
-                return cards.subList(start, i);
+            if (sLen >= 4) {
+                if (finish == -1 || cards.get(pointer).getRank() < cards.get(finish).getRank()) {
+                    finish = pointer;
+                }
             }
+            pointer = pointer + 1 >= cards.size() ? 0 : pointer + 1;
         }
-        return Collections.emptyList();
+        if (finish == -1) {
+            return Collections.emptyList();
+        } else {
+            List<Card> straight = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                straight.add(cards.get(finish));
+                finish = finish - 1 < 0 ? cards.size() - 1 : finish - 1;
+            }
+            return straight;
+        }
     }
 
 
