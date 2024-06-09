@@ -5,9 +5,23 @@ public class PlayerStatistics {
 
     private double tieProbability;
 
-    public PlayerStatistics(double winProbability, double tieProbability) {
+    private int wins;
+
+    private int ties;
+
+    public PlayerStatistics(double winProbability, double tieProbability, int wins, int ties) {
         this.winProbability = winProbability;
         this.tieProbability = tieProbability;
+        this.wins = wins;
+        this.ties = ties;
+    }
+
+    public int getWins() {
+        return wins;
+    }
+
+    public int getTies() {
+        return ties;
     }
 
     public double getWinProbability() {

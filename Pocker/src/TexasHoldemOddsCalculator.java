@@ -25,30 +25,35 @@ public class TexasHoldemOddsCalculator {
         }
     }
 
-    public static Map<Integer, PlayerStatistics> calculateOdds(String[][] playerHands, String[] board) {
+
+    public static Map<Integer, PlayerStatistics> calculateOdds(String[][] playerHands, String[] board, int simulationCount) {
+        if (simulationCount == -1) {
+            simulationCount = SIMULATION_COUNT;
+        }
         int playerCount = playerHands.length;
         int[] wins = new int[playerCount];
         int[] ties = new int[playerCount];
+        List<String> deck = new ArrayList<>(DECK);
+        for (String[] hand : playerHands) {
+            deck.remove(hand[0]);
+            deck.remove(hand[1]);
+        }
+        for (String card : board) {
+            if (!card.isEmpty()) {
+                deck.remove(card);
+            }
+        }
 
-        for (int i = 0; i < SIMULATION_COUNT; i++) {
-            List<String> deck = new ArrayList<>(DECK);
-            for (String[] hand : playerHands) {
-                deck.remove(hand[0]);
-                deck.remove(hand[1]);
-            }
-            for (String card : board) {
-                if (!card.isEmpty()) {
-                    deck.remove(card);
-                }
-            }
-            Collections.shuffle(deck);
+        for (int i = 0; i < simulationCount; i++) {
+            List<String> shuffledDeck = new ArrayList<>(deck);
+            Collections.shuffle(shuffledDeck);
 
             String[] simulatedBoard = new String[5];
             for (int j = 0; j < 5; j++) {
                 if (j < board.length && !board[j].isEmpty()) {
                     simulatedBoard[j] = board[j];
                 } else {
-                    simulatedBoard[j] = deck.remove(deck.size() - 1);
+                    simulatedBoard[j] = shuffledDeck.remove(shuffledDeck.size() - 1);
                 }
             }
 
@@ -74,7 +79,9 @@ public class TexasHoldemOddsCalculator {
 
             for (Map.Entry<Integer, Long> entry : playerHandWeights.entrySet()) {
                 if (entry.getValue() == max) {
-                    if(isTie) {
+                    if (isTie) {
+                        String[] fullHand = {playerHands[entry.getKey()][0], playerHands[entry.getKey()][1], simulatedBoard[0], simulatedBoard[1], simulatedBoard[2], simulatedBoard[3], simulatedBoard[4]};
+                        long handValue = evaluateHand(fullHand);
                         ties[entry.getKey()]++;
                     } else {
                         wins[entry.getKey()]++;
@@ -85,13 +92,49 @@ public class TexasHoldemOddsCalculator {
 
         Map<Integer, PlayerStatistics> playerStatistics = new HashMap<>();
         for (int i = 0; i < playerCount; i++) {
-            playerStatistics.put(i, new PlayerStatistics((double) wins[i] / SIMULATION_COUNT, (double) ties[i] / SIMULATION_COUNT));
+            playerStatistics.put(i, new PlayerStatistics((double) wins[i] / simulationCount, (double) ties[i] / simulationCount, wins[i], ties[i]));
         }
         return playerStatistics;
     }
 
+    public static PlayerStatistics calculateWinProbability(String[] yourHand, String[] board, int playerCount) {
+        int simulationCountSqrt = SIMULATION_COUNT;
+        int simulationCount = simulationCountSqrt;
 
-    public static long evaluateHand(String[] hand) {//TODO допилить старшую карту
+        int wins = 0;
+        int ties = 0;
+
+        String[][] playerHands = new String[playerCount][2];
+        playerHands[0] = yourHand;
+
+        List<String> deck = new ArrayList<>(DECK);
+        for (String card : yourHand) {
+            deck.remove(card);
+        }
+        for (String card : board) {
+            if (!card.isEmpty()) {
+                deck.remove(card);
+            }
+        }
+
+        for (int i = 0; i < simulationCountSqrt; i++) {
+            List<String> shuffledDeck = new ArrayList<>(deck);
+            Collections.shuffle(shuffledDeck);
+
+            for (int j = 1; j < playerCount; j++) {
+                playerHands[j][0] = shuffledDeck.remove(0);
+                playerHands[j][1] = shuffledDeck.remove(0);
+            }
+
+            Map<Integer, PlayerStatistics> playerStatistics = calculateOdds(playerHands, board, 1);
+            wins += playerStatistics.get(0).getWins();
+            ties += playerStatistics.get(0).getTies();
+        }
+
+        return new PlayerStatistics(wins / (double) simulationCount, ties / (double) simulationCount, wins, ties);
+    }
+
+    public static long evaluateHand(String[] hand) {
         List<Card> cards = new ArrayList<>();
         for (String card : hand) {
             cards.add(new Card(card.substring(0, 1), card.substring(1)));
@@ -104,22 +147,22 @@ public class TexasHoldemOddsCalculator {
 
         if (!straight.isEmpty()) {
             if (getOldestFlush(straight) >= 0) {
-                return 9 * MULTIPLIER + getOldest(straight).getRank(); // Flush straight (Flush Royal)
+                return 8 * 15 * MULTIPLIER + MULTIPLIER * (getOldest(straight).getRank() + 1) + getOldestCombination(cards); // Flush straight (Flush Royal)
             } else {
-                return 4 * MULTIPLIER + getOldest(straight).getRank(); // Straight
+                return 4 * 15 * MULTIPLIER + MULTIPLIER * (getOldest(straight).getRank() + 1) + getOldestCombination(cards); // Straight
             }
         } else if (getFourOfAKind(cards) >= 0) {
-            return 7 * MULTIPLIER + getFourOfAKind(cards); // Four of a Kind
+            return 7 * 15 * MULTIPLIER + MULTIPLIER * (getFourOfAKind(cards) + 1) + getOldestCombination(cards); // Four of a Kind
         } else if (getOldestFullHouse(cards) >= 0) {
-            return 6 * MULTIPLIER + getOldestFullHouse(cards); // Full House
+            return 6 * 15 * MULTIPLIER + MULTIPLIER * (getOldestFullHouse(cards) + 1) + getOldestCombination(cards); // Full House
         } else if (getOldestFlush(cards) >= 0) {
-            return 5 * MULTIPLIER + getOldestFlush(cards); // Flush
+            return 5 * 15 * MULTIPLIER + MULTIPLIER * (getOldestFlush(cards) + 1) + getOldestCombination(cards); // Flush
         } else if (getThreeOfAKind(cards) >= 0) {
-            return 3 * MULTIPLIER + getThreeOfAKind(cards); // Three of a Kind
-        } else if (getOldestTwoPair(cards) >= 0) {
-            return 2 * MULTIPLIER + getOldestTwoPair(cards); // Two Pair
+            return 3 * 15 * MULTIPLIER + MULTIPLIER * (getThreeOfAKind(cards) + 1) + getOldestCombination(cards); // Three of a Kind
+        } else if (getTwoPair(cards) >= 0) {
+            return 2 * 15 * MULTIPLIER + MULTIPLIER * (getTwoPair(cards) + 1) + getOldestCombination(cards); // Two Pair
         } else if (getOnePair(cards) >= 0) {
-            return MULTIPLIER + getOnePair(cards); // One Pair
+            return 15 * MULTIPLIER + MULTIPLIER * (getOnePair(cards) + 1) + getOldestCombination(cards); // One Pair
         } else {
             return getOldestCombination(cards); // High Card
         }
@@ -129,10 +172,10 @@ public class TexasHoldemOddsCalculator {
         return Collections.max(cards);
     }
 
-    private static int  getOldestCombination(List<Card> cards) {
+    private static int getOldestCombination(List<Card> cards) {
         int result = 0;
-        for (Card card : cards) {
-            result += (int) Math.pow(10, card.getRank());
+        for (int i = 0 ; i < 5; i++) {
+            result += (int) Math.pow(10, cards.get(i).getRank());
         }
         return result;
     }
@@ -180,14 +223,14 @@ public class TexasHoldemOddsCalculator {
                     havePair = true;
                     oldestCard = Math.max(oldestCard, entry.getKey());
                 }
-            } else if (entry.getValue() >= 2){
+            } else if (entry.getValue() >= 2) {
                 havePair = true;
             }
         }
         return havePair && haveThree ? oldestCard : -1;
     }
 
-    private static int getOldestTwoPair(List<Card> cards) {
+    private static int getTwoPair(List<Card> cards) {
         Map<Integer, Long> map = cards.stream()
                 .collect(Collectors.groupingBy(Card::getRank, Collectors.counting()));
         int oldestCard = -1;
@@ -221,63 +264,65 @@ public class TexasHoldemOddsCalculator {
         return getOldestOfNOfAKind(cards, 2);
     }
 
-    private static int handValue(List<String> ranks) {
-        int value = 0;
-        for (int i = 0; i < ranks.size(); i++) {
-            value += (int) (Arrays.asList(RANKS).indexOf(ranks.get(i)) * Math.pow(15, i));
-        }
-        return value;
-    }
 
-    public static double calculateWinProbability(String[] yourHand, String[] board) {
-        int wins = 0;
-        int losses = 0;
-        int ties = 0;
-
+    public static double calculateImprovementProbability(String[] hand, String[] board, List<String> combinations) {
         List<String> deck = new ArrayList<>(DECK);
-        for (String card : yourHand) {
+        for (String card : hand) {
             deck.remove(card);
         }
         for (String card : board) {
-            if (!card.isEmpty()) {
-                deck.remove(card);
-            }
+            deck.remove(card);
         }
-
-        for (int i = 0; i < SIMULATION_COUNT; i++) {
-            List<String> shuffledDeck = new ArrayList<>(deck);
-            Collections.shuffle(shuffledDeck);
-
-            String[] opponentHand = {shuffledDeck.remove(0), shuffledDeck.remove(0)};
-            String[] opponentBoard = new String[5];
-            for (int j = 0; j < 5; j++) {
-                if (j < board.length && !board[j].isEmpty()) {
-                    opponentBoard[j] = board[j];
-                } else {
-                    opponentBoard[j] = shuffledDeck.remove(0);
+        List<String> currentHand = new ArrayList<>(Arrays.asList(hand));
+        currentHand.addAll(Arrays.asList(board));
+        List<Card> currentCards = new ArrayList<>(currentHand.stream().map(s -> new Card(s.substring(0, 1), s.substring(1))).toList());
+        int outs = 0;
+        for (int i = 0; i < deck.size(); i++) {
+            Card addedCard = new Card(deck.get(i).substring(0, 1), deck.get(i).substring(1));
+            currentCards.add(addedCard);
+            Collections.sort(currentCards);
+            for (String combination : combinations) {
+                int lastOuts = outs;
+                outs += switch (combination) {
+                    case "One Pair" -> getOnePair(currentCards) >= 0 ? 1 : 0;
+                    case "Two Pair" -> getTwoPair(currentCards) >= 0 ? 1 : 0;
+                    case "Three of a Kind" -> getThreeOfAKind(currentCards) >= 0 ? 1 : 0;
+                    case "Straight" -> getStraight(currentCards).isEmpty() ? 0 : 1;
+                    case "Flush" -> getOldestFlush(currentCards) >= 0 ? 1 : 0;
+                    case "Full House" -> getOldestFullHouse(currentCards) >= 0 ? 1 : 0;
+                    case "Four of a Kind" -> getFourOfAKind(currentCards) >= 0 ? 1 : 0;
+                    case "Straight Flush" -> {
+                        List<Card> straight = getStraight(currentCards);
+                        if (straight.isEmpty()) {
+                            yield 0;
+                        }
+                        yield getOldestFlush(straight) >= 0 ? 1 : 0;
+                    }
+                    case "Royal Flush" -> {
+                        List<Card> straight = getStraight(currentCards);
+                        if (straight.isEmpty()) {
+                            yield 0;
+                        }
+                        yield getOldestFlush(straight) == 12 ? 1 : 0;
+                    }
+                    default -> 0;
+                };
+                if (lastOuts != outs) {
+                    break;
                 }
             }
-
-            long yourHandValue = evaluateHand(concatenateArrays(yourHand, board));
-            long opponentHandValue = evaluateHand(concatenateArrays(opponentHand, opponentBoard));
-
-            if (yourHandValue > opponentHandValue) {
-                wins++;
-            } else if (yourHandValue < opponentHandValue) {
-                losses++;
-            } else {
-                ties++;
-            }
+            currentCards.remove(addedCard);
         }
-
-        return (double) wins / SIMULATION_COUNT;
+        return outs / (double) deck.size();
     }
 
-    private static String[] concatenateArrays(String[] arr1, String[] arr2) {
-        String[] result = new String[arr1.length + arr2.length];
-        System.arraycopy(arr1, 0, result, 0, arr1.length);
-        System.arraycopy(arr2, 0, result, arr1.length, arr2.length);
-        return result;
+    public static double calculateME(double bank, double bet, int playerCount, PlayerStatistics playerStatistics) {
+        double win = playerStatistics.getWinProbability();
+        double tie = playerStatistics.getTieProbability();
+        return (win + tie / 2) * (bank + bet * (playerCount - 1)) - (1 - tie - win) * bet;
     }
 
+    public static double calculateMaximumBet(double bank, double improvementProbability, int playerCount) {
+        return (bank * improvementProbability) / (1 - (playerCount - 1) * improvementProbability);
+    }
 }
