@@ -89,7 +89,7 @@ ME = (win + tie/2) * (bank + bet * (players - 1)) - (1 - tie - win) * bet
 
 Если так не сработает, можно открыть проект в IDE и запустить файл TexasHoldemOddsCalculatorGUI.java
 
-После запуска должно открыть окно Texas Holdem Odds Calculator (советую пользоваться в полнооконном режиме)
+После запуска должно открыть окно Texas Holdem Odds Calculator (советую пользоваться в полноэкранном режиме)
 
 <img width="408" alt="image" src="https://github.com/PavlovEvgeniy239/Pocker/assets/85906673/c0adbfe7-7bb0-442d-aa94-f33e35e51ce7">
 
